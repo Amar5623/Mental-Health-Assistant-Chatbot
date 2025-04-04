@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mental Health Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>Mental Health Assistant</h1>
+            <p>A safe space to share your thoughts and feelings</p>
+        </div>
+        
+        <div class="chat-toolbar">
+            <button id="resources-button" class="toolbar-button" title="Get Mental Health Resources">
+                <i class="fas fa-book-medical"></i> Resources
+            </button>
+            <button id="clear-button" class="toolbar-button" title="Clear Chat History">
+                <i class="fas fa-trash"></i> Clear Chat
+            </button>
+        </div>
+        
+        <div class="chat-messages" id="chat-messages">
+            <!-- Messages will be added here dynamically -->
+        </div>
+        
+        <div class="chat-input">
+            <input type="text" id="user-input" placeholder="Type your message here...">
+            <button id="send-button">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+        
+        <div class="chat-footer">
+            <p>This is an AI assistant and not a substitute for professional mental health support.</p>
+            <p>If you're in crisis, please call your local emergency number or a crisis helpline.</p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+</body>
+</html>

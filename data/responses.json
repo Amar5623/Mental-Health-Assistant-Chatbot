@@ -1,0 +1,37 @@
+{
+    "greetings": [
+        "Hello! I'm here to listen. How are you feeling today?",
+        "Hi there! I'm your mental health assistant. How can I support you today?",
+        "Welcome! I'm here to chat whenever you need someone to talk to."
+    ],
+    "positive_emotions": [
+        "I'm glad to hear you're feeling positive! What's contributing to that feeling?",
+        "That's wonderful to hear! It's important to acknowledge these good moments.",
+        "I'm happy that you're in a good place right now. Would you like to share more about it?"
+    ],
+    "negative_emotions": [
+        "I'm sorry to hear you're feeling this way. Would you like to talk more about what's troubling you?",
+        "That sounds difficult. Remember that it's okay to have these feelings, and I'm here to listen.",
+        "I appreciate you sharing that with me. Would it help to explore what might be causing these feelings?"
+    ],
+    "neutral_emotions": [
+        "How has your day been so far?",
+        "Is there anything specific on your mind today?",
+        "I'm here to chat about whatever you'd like. What's on your mind?"
+    ],
+    "gratitude": [
+        "You're very welcome. I'm here anytime you need to talk.",
+        "I'm glad I could be here for you. Is there anything else on your mind?",
+        "It's my pleasure to be here with you. How else can I support you today?"
+    ],
+    "farewell": [
+        "Take care of yourself. I'll be here when you want to chat again.",
+        "Goodbye for now. Remember to be kind to yourself.",
+        "I'll be here whenever you need to talk. Have a peaceful day."
+    ],
+    "fallback": [
+        "I'm here to listen. Would you like to tell me more?",
+        "I appreciate you sharing that. How does that make you feel?",
+        "Thank you for expressing that. Would you like to explore this further?"
+    ]
+}
