@@ -1,10 +1,19 @@
 import json
 import os
 import random
+import time
 from datetime import datetime
 from emotion_analyzer import EmotionAnalyzer
 import difflib
 from resources import MentalHealthResources
+from collections import defaultdict
+import google.generativeai as genai  # Gemini integration
+
+# Configure Gemini API (replace with your actual API key)
+genai.configure(api_key="AIzaSyCegmzgSkEX0SKQTdU1Dl5swf5dZYBqr3U")
+
+USE_GEMINI = True
+GEMINI_MODEL_NAME = "gemini-1.5-flash"
 
 class ChatbotEngine:
     def __init__(self):
@@ -12,14 +21,13 @@ class ChatbotEngine:
         self.emotion_analyzer = EmotionAnalyzer()
         self.resources = MentalHealthResources()
         self.load_responses()
-        
+        self.user_concerns = defaultdict(set)
+
     def load_responses(self):
-        """Load predefined responses from JSON file"""
         try:
             with open('data/responses.json', 'r') as f:
                 self.responses = json.load(f)
         except FileNotFoundError:
-            # Create default responses if file doesn't exist
             self.responses = {
                 "greetings": [
                     "Hello! I'm here to listen. How are you feeling today?",
@@ -91,21 +99,39 @@ class ChatbotEngine:
                     "Sometimes talking to a mental health professional can be really beneficial. Would you like information about finding support?",
                     "There are many resources available to support mental health. Would it be helpful if I shared some with you?"
                 ]
-            }
-            # Save default responses
+            }  # Keep existing response dictionary content
             os.makedirs('data', exist_ok=True)
             with open('data/responses.json', 'w') as f:
                 json.dump(self.responses, f, indent=4)
-    
+
+    def simulate_thinking(self):
+        print("[thinking...]")
+        time.sleep(random.uniform(1.5, 2.5))
+
     def similarity(self, text1, text2):
-        """Calculate similarity between two text strings"""
         return difflib.SequenceMatcher(None, text1.lower(), text2.lower()).ratio()
-    
+
+    def extract_concerns(self, message):
+        text = message.lower()
+        topics = {
+            "stress": ["stress", "pressure", "overwhelmed", "tension"],
+            "anxiety": ["anxiety", "nervous", "panic", "worried"],
+            "depression": ["depressed", "sad", "hopeless", "empty", "worthless"],
+            "relationship": ["relationship", "partner", "breakup", "heartbreak"],
+            "self-esteem": ["self-esteem", "confidence", "insecure", "worthless"],
+            "academic": ["exam", "study", "grades", "assignment", "deadline"],
+            "work": ["job", "work", "career", "boss", "burnout"],
+            "loneliness": ["alone", "lonely", "isolated", "nobody"],
+            "grief": ["loss", "grief", "died", "passed away", "funeral"],
+        }
+        concerns = set()
+        for topic, keywords in topics.items():
+            if any(word in text for word in keywords):
+                concerns.add(topic)
+        return concerns
+
     def detect_intent(self, text):
-        """Detect the user's intent from their message"""
         text_lower = text.lower()
-        
-        # Simple intent detection based on keywords
         if any(word in text_lower for word in ['hello', 'hi', 'hey', 'greetings']):
             return "greetings"
         elif any(word in text_lower for word in ['thank', 'thanks', 'appreciate']):
@@ -121,105 +147,113 @@ class ChatbotEngine:
         elif any(word in text_lower for word in ['self-help', 'app', 'book', 'meditation', 'mindfulness']):
             return "self_help"
         else:
-            # If no specific intent is detected, analyze emotion
             emotion_result = self.emotion_analyzer.analyze(text)
-            
-            # Use the first detected emotion, or fallback to sentiment
             if emotion_result['emotions']:
                 return emotion_result['emotions'][0]
             elif emotion_result['sentiment'] == 'positive':
                 return 'joy'
             elif emotion_result['sentiment'] == 'negative':
-                return 'sadness'  # Default negative emotion
+                return 'sadness'
             else:
                 return 'neutral'
-    
+
     def save_interaction(self, user_id, message, response):
-        """Save the interaction to user history"""
         if user_id not in self.user_history:
             self.user_history[user_id] = []
-        
+
+        concerns = list(self.extract_concerns(message))
+        for concern in concerns:
+            self.user_concerns[user_id].add(concern)
+
         self.user_history[user_id].append({
             'user_message': message,
             'bot_response': response,
+            'concerns': concerns,
             'timestamp': datetime.now().isoformat()
         })
-        
-        # Save to file for persistence
+
         try:
             os.makedirs('data/user_history', exist_ok=True)
             with open(f'data/user_history/{user_id}.json', 'w') as f:
                 json.dump(self.user_history[user_id], f, indent=4)
         except Exception as e:
             print(f"Error saving user history: {e}")
-    
+
     def load_user_history(self, user_id):
-        """Load user history from file if available"""
         try:
             with open(f'data/user_history/{user_id}.json', 'r') as f:
                 self.user_history[user_id] = json.load(f)
         except FileNotFoundError:
-            # No history file exists yet
             self.user_history[user_id] = []
         except Exception as e:
             print(f"Error loading user history: {e}")
             self.user_history[user_id] = []
-    
+
+    def get_top_concerns(self, user_id, top_n=3):
+        concern_count = defaultdict(int)
+        for interaction in self.user_history.get(user_id, []):
+            for concern in interaction.get('concerns', []):
+                concern_count[concern] += 1
+        sorted_concerns = sorted(concern_count.items(), key=lambda x: x[1], reverse=True)
+        return sorted_concerns[:top_n]
+
     def get_personalized_response(self, intent, user_id, message):
-        """Get a personalized response based on user history and current intent"""
-        # If this is a new user or we have limited history, use standard responses
         if user_id not in self.user_history or len(self.user_history[user_id]) < 3:
             return random.choice(self.responses.get(intent, self.responses["fallback"]))
-        
-        # Check for patterns in user messages
+
         recent_messages = [item['user_message'] for item in self.user_history[user_id][-5:]]
-        
-        # Check if user has been consistently negative
-        negative_count = sum(1 for msg in recent_messages if 
-                            self.emotion_analyzer.analyze(msg)['sentiment'] == 'negative')
-        
+        negative_count = sum(1 for msg in recent_messages if self.emotion_analyzer.analyze(msg)['sentiment'] == 'negative')
+
         if negative_count >= 3 and intent in ['sadness', 'fear', 'anger']:
             return ("I've noticed you've been feeling down for a while. " +
-                   "Remember that it's okay to seek help when needed. " +
-                   "Would talking to a mental health professional be something you'd consider?")
-        
-        # Check if user is repeating the same concern
+                    "Remember that it's okay to seek help when needed. " +
+                    "Would talking to a mental health professional be something you'd consider?")
+
         if len(recent_messages) >= 2 and any(
             self.similarity(recent_messages[-1], msg) > 0.7 for msg in recent_messages[:-1]
         ):
             return ("I notice this seems to be a recurring concern for you. " +
-                   "Sometimes talking through the same issue from different angles can help. " +
-                   "Would it help to explore what might be keeping this on your mind?")
-        
-        # Check if user has been sharing a lot but not asking questions
-        if len(recent_messages) >= 4 and all(
-            '?' not in msg for msg in recent_messages
-        ):
+                    "Sometimes talking through the same issue from different angles can help. " +
+                    "Would it help to explore what might be keeping this on your mind?")
+
+        if len(recent_messages) >= 4 and all('?' not in msg for msg in recent_messages):
             return ("Thank you for sharing so openly with me. " +
-                   "I'm wondering if there's anything specific you'd like my perspective on, " +
-                   "or if it's helpful just to express your thoughts?")
-        
-        # Check for mentions of self-harm or crisis
+                    "I'm wondering if there's anything specific you'd like my perspective on, " +
+                    "or if it's helpful just to express your thoughts?")
+
         crisis_keywords = ['kill myself', 'suicide', 'end my life', 'harm myself', 'hurt myself']
         if any(keyword in message.lower() for keyword in crisis_keywords):
             return ("I'm really concerned about what you're sharing. If you're having thoughts of harming yourself, " +
-                   "please reach out to a crisis helpline immediately. In the US, you can text HOME to 741741 to reach the Crisis Text Line, " +
-                   "or call the National Suicide Prevention Lifeline at 1-800-273-8255. These services are confidential and available 24/7. " +
-                   "Would you like me to provide more resources?")
-        
-        # Default to standard response for the detected intent
+                    "please reach out to a crisis helpline immediately. In the US, you can text HOME to 741741 to reach the Crisis Text Line, " +
+                    "or call the National Suicide Prevention Lifeline at 1-800-273-8255. These services are confidential and available 24/7. " +
+                    "Would you like me to provide more resources?")
+
         return random.choice(self.responses.get(intent, self.responses["fallback"]))
-    
-    def get_response(self, message, user_id):
-        """Generate a response based on the user's message"""
-        # Load user history if available
+
+    def generate_gemini_response(self, message, user_id):
+        recent_history = self.user_history.get(user_id, [])[-5:]
+        context = "\n".join(f"User: {item['user_message']}\nBot: {item['bot_response']}" for item in recent_history)
+        prompt = (
+            "You are a compassionate and thoughtful mental health support assistant. "
+            "Speak in a gentle, friendly, and non-judgmental tone. Be empathetic, supportive, and validating. "
+            f"Use this past conversation to maintain context:\n{context}\nUser: {message}\nBot:"
+        )
+
+        try:
+            model = genai.GenerativeModel(GEMINI_MODEL_NAME)
+            response = model.generate_content(prompt)
+            return response.text.strip()
+        except Exception as e:
+            print(f"Gemini error: {e}")
+            return None
+
+    def get_response(self, message, user_id, context=None):
+        self.simulate_thinking()
         if user_id not in self.user_history:
             self.load_user_history(user_id)
-        
-        # Detect intent
+
         intent = self.detect_intent(message)
-        
-        # Handle resource requests
+
         if intent == "resources":
             return self.resources.format_resources_for_chat("all")
         elif intent == "crisis":
@@ -228,24 +262,33 @@ class ChatbotEngine:
             return self.resources.format_resources_for_chat("therapy")
         elif intent == "self_help":
             return self.resources.format_resources_for_chat("self_help")
-        
-        # Check for crisis keywords regardless of intent
+
         crisis_keywords = ['kill myself', 'suicide', 'end my life', 'harm myself', 'hurt myself']
         if any(keyword in message.lower() for keyword in crisis_keywords):
             crisis_response = ("I'm really concerned about what you're sharing. If you're having thoughts of harming yourself, " +
-                              "please reach out to a crisis helpline immediately. " +
-                              "Here are some resources that can help:\n\n")
+                               "please reach out to a crisis helpline immediately. " +
+                               "Here are some resources that can help:\n\n")
             return crisis_response + self.resources.format_resources_for_chat("crisis")
-        
-        # Get personalized response for other intents
+
         response = self.get_personalized_response(intent, user_id, message)
-        
-        # Add occasional encouragement for negative emotions
-        if intent in ['sadness', 'fear', 'anger'] and random.random() < 0.3:
-            encouragement = random.choice(self.responses["encouragement"])
-            response = f"{response} {encouragement}"
-        
-        # Save this interaction
+
+        if USE_GEMINI:
+            gemini_response = self.generate_gemini_response(message, user_id)
+            if gemini_response:
+                response = gemini_response
+
         self.save_interaction(user_id, message, response)
-        
+
+        trend_score = self.get_emotion_trend(user_id)
+        if trend_score >= 2:
+            response += " I'm really glad to see you feeling a bit better lately. Keep it going!"
+        elif trend_score <= -2:
+            response += " I’ve noticed you’ve been feeling down for a while. Would you like to talk more about what’s been going on?"
+
         return response
+
+    def get_emotion_trend(self, user_id, window=5):
+        history = self.user_history.get(user_id, [])[-window:]
+        sentiments = [self.emotion_analyzer.analyze(h['user_message'])['sentiment'] for h in history]
+        score = sentiments.count('positive') - sentiments.count('negative')
+        return score
