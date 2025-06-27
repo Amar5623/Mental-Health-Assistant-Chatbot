@@ -1,43 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mental Health Assistant</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>MindMitra - Mental Health Assistant</title>
+    
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 </head>
 <body>
-    <div class="chat-container">
-        <div class="chat-header">
-            <h1>Mental Health Assistant</h1>
-            <p>A safe space to share your thoughts and feelings</p>
-        </div>
-        
-        <div class="chat-toolbar">
-            <button id="resources-button" class="toolbar-button" title="Get Mental Health Resources">
-                <i class="fas fa-book-medical"></i> Resources
+    <div class="chat-wrapper">
+        <header class="chat-header">
+            <h1>🧠 MindMitra</h1>
+            <p>Your safe space to express and heal 💬</p>
+        </header>
+
+        <section class="chat-toolbar">
+            <button id="resources-button" class="toolbar-button" title="Resources">
+                <i class="fas fa-book-open"></i> Resources
             </button>
-            <button id="clear-button" class="toolbar-button" title="Clear Chat History">
-                <i class="fas fa-trash"></i> Clear Chat
+            <button id="clear-button" class="toolbar-button" title="Clear Chat">
+                <i class="fas fa-trash-alt"></i> Clear Chat
             </button>
-        </div>
-        
-        <div class="chat-messages" id="chat-messages">
-            <!-- Messages will be added here dynamically -->
-        </div>
-        
-        <div class="chat-input">
-            <input type="text" id="user-input" placeholder="Type your message here...">
-            <button id="send-button">
+        </section>
+
+        <main class="chat-messages" id="chat-messages">
+            <!-- Dynamic messages appear here -->
+        </main>
+
+        <footer class="chat-input-area">
+            <input type="text" id="user-input" placeholder="How are you feeling today?" aria-label="Message input"/>
+            <button id="send-button" title="Send message">
                 <i class="fas fa-paper-plane"></i>
             </button>
-        </div>
-        
+        </footer>
+
         <div class="chat-footer">
-            <p>This is an AI assistant and not a substitute for professional mental health support.</p>
-            <p>If you're in crisis, please call your local emergency number or a crisis helpline.</p>
+            <small>This AI assistant is for support only and not a substitute for professional help.</small>
+            <small>In crisis? Contact emergency services or a mental health helpline.</small>
         </div>
     </div>
 

@@ -10,7 +10,7 @@ from collections import defaultdict
 import google.generativeai as genai  # Gemini integration
 
 # Configure Gemini API (replace with your actual API key)
-genai.configure(api_key="YOUR_GEMINI_API_KEY")
+genai.configure(api_key="AIzaSyCegmzgSkEX0SKQTdU1Dl5swf5dZYBqr3U")
 
 USE_GEMINI = True
 GEMINI_MODEL_NAME = "gemini-1.5-flash"

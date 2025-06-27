@@ -12,7 +12,7 @@ app.secret_key = 'supersecretkey123'
 app.config["SESSION_TYPE"] = "filesystem"
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_USE_SIGNER"] = True
-app.config["SESSION_COOKIE_NAME"] = "mental-health-session"  # Add this line
+app.config["SESSION_COOKIE_NAME"] = "mental-health-session" 
 
 # Initialize the session after all configs
 Session(app)

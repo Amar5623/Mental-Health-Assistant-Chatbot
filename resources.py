@@ -2,7 +2,7 @@ class MentalHealthResources:
     @staticmethod
     def get_crisis_resources():
         return {
-            "US": {
+            "INDIA": {
                 "National Suicide Prevention Lifeline": {
                     "phone": "1-800-273-8255",
                     "website": "https://suicidepreventionlifeline.org/",
